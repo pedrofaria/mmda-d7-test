@@ -1,0 +1,104 @@
+<?php
+
+/**
+ * @file
+ */
+
+/**
+ * Implements hook_menu().
+ */
+function d7_test_menu() {
+  $items = array();
+
+  $items['d7test/myname'] = array(
+    'title' => 'Retrive User Name',
+    'description' => 'Retrive User Name from database',
+    'page callback' => 'd7_test_user_name',
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['d7test/myname/form'] = array(
+    'title' => 'Retrive User Name',
+    'description' => 'Retrive User Name from database',
+    'page callback' => 'd7_test_user_name_form_page',
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_block_info().
+ */
+function d7_test_block_info() {
+  $blocks['user_name'] = array(
+    // The name that will appear in the block list.
+    'info' => t('User Name'),
+    // Default setting.
+    'cache' => DRUPAL_NO_CACHE,
+  );
+  return $blocks;
+}
+
+/**
+ * Implements hook_block_view().
+ */
+function d7_test_block_view($delta = '') {
+  switch ($delta) {
+    case 'user_name':
+      $block['subject'] = t('User Name');
+      $block['content'] = theme('user_name_display');
+    return $block;
+  }
+}
+
+/**
+ * Implements hook_theme().
+ */
+function d7_test_theme($existing, $type, $theme, $path) {
+  return array(
+    'user_name_display' => array(
+      'template' => 'themes/user_name_display',
+    ),
+  );
+}
+
+function d7_test_user_name() {
+  $response = array(
+    'data' => array(
+      'first_name' => 'Pedro',
+      'last_name' => 'Faria',
+    ),
+  );
+
+  $response['data'] = null;
+
+  drupal_json_output($response);
+}
+
+function d7_test_user_name_form_page() {
+  $form = drupal_get_form('d7_test_user_name_form');
+  echo drupal_render($form);
+}
+
+/**
+ * Page callback: User Name Data.
+ *
+ * @see d7_test_menu()
+ */
+function d7_test_user_name_form($form, &$form_state) {
+  $form['first_name'] = array(
+    '#type' => 'textfield',
+    '#title' => 'First Name'
+  );
+
+  $form['last_name'] = array(
+    '#type' => 'textfield',
+    '#title' => 'Last Name'
+  );
+
+  return $form;
+}
+

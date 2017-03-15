@@ -1,4 +1,7 @@
-name = MMDA Drupal 7 Test 
-description = Show Form inside a modal e post data throught AJAX. 
-core = 7.x 
+name = MMDA Drupal 7 Test
+description = Show Form inside a modal e post data throught AJAX.
+core = 7.x
 package = MMDA
+stylesheets[all][] = styles.css
+scripts[] = js/d7testModal.js
+scripts[] = js/d7test.js
