@@ -65,16 +65,28 @@ function d7_test_theme($existing, $type, $theme, $path) {
   );
 }
 
-function d7_test_user_name() {
+function d7_test_user_name_load() {
+  global $user;
 
+  $query = db_select('d7test_username', 'u')
+    ->fields('u', array('uid', 'first_name', 'last_name'))
+    ->condition('uid', $user->uid)
+    ->execute();
+
+  return $query->fetchAssoc();
+}
+
+function d7_test_user_name() {
   $response = array(
     'data' => NULL,
   );
 
-  if (isset($_SESSION['d7-first_name']) && isset($_SESSION['d7-last_name'])) {
+  $row = d7_test_user_name_load();
+
+  if ($row) {
     $response['data'] = array(
-      'first_name' => $_SESSION['d7-first_name'],
-      'last_name' => $_SESSION['d7-last_name'],
+      'first_name' => $row['first_name'],
+      'last_name' => $row['last_name'],
     );
   }
 
@@ -82,7 +94,8 @@ function d7_test_user_name() {
 }
 
 function d7_test_user_name_form_page() {
-  $form = drupal_render(drupal_get_form('d7_test_user_name_form'));
+  $raw_form = drupal_get_form('d7_test_user_name_form');
+  $form = drupal_render($raw_form);
   $content = theme_status_messages(array('display' => null));
 
   echo $content . $form;
@@ -94,15 +107,20 @@ function d7_test_user_name_form_page() {
  * @see d7_test_menu()
  */
 function d7_test_user_name_form($form, &$form_state) {
+  $data = d7_test_user_name_load();
+
   $form['first_name'] = array(
     '#type' => 'textfield',
     '#title' => 'First Name',
-    '#required' => TRUE
+    '#required' => TRUE,
+    '#default_value' => $data['first_name'],
   );
 
   $form['last_name'] = array(
     '#type' => 'textfield',
-    '#title' => 'Last Name'
+    '#title' => 'Last Name',
+    '#required' => TRUE,
+    '#default_value' => $data['last_name'],
   );
 
   $form['submit'] = array(
@@ -114,6 +132,13 @@ function d7_test_user_name_form($form, &$form_state) {
 }
 
 function d7_test_user_name_form_submit($form, &$form_state) {
-  $_SESSION['d7-first_name'] = $form_state['values']['first_name'];
-  $_SESSION['d7-last_name'] = $form_state['values']['last_name'];
+  global $user;
+
+  $data = array(
+    'uid' => $user->uid,
+    'first_name' => $form_state['values']['first_name'],
+    'last_name' => $form_state['values']['last_name']
+  );
+
+  drupal_write_record('d7test_username', $data, 'uid');
 }

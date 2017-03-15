@@ -1,0 +1,30 @@
+<?php
+
+function d7_test_schema() {
+  $schema['d7test_username'] = array(
+    'description' => 'The table for user names.',
+    'fields' => array(
+      'uid' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => "User's {users}.uid.",
+      ),
+      'first_name' => array(
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'last_name' => array(
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+    ),
+    'primary key' => array('uid'),
+  );
+
+  return $schema;
+}
