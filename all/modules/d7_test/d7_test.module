@@ -1,0 +1,183 @@
+<?php
+
+/**
+ * @file
+ * Modulo para o teste da MMDA.
+ */
+
+/**
+ * Implements d7_test_permission().
+ */
+function d7_test_permission() {
+  return array(
+    'access username form' => array(
+      'title' => t('Access User name form'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_menu().
+ */
+function d7_test_menu() {
+  $items = array();
+
+  $items['d7test/myname'] = array(
+    'title' => 'Retrive User Name',
+    'description' => 'Retrive User Name from database',
+    'page callback' => 'd7_test_user_name',
+    'access arguments' => array('access username form'),
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['d7test/myname/form'] = array(
+    'title' => 'Retrive User Name',
+    'description' => 'Retrive User Name from database',
+    'page callback' => 'd7_test_user_name_form_page',
+    'access arguments' => array('access username form'),
+    'type' => MENU_CALLBACK,
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_block_info().
+ */
+function d7_test_block_info() {
+  $blocks['user_name'] = array(
+    // The name that will appear in the block list.
+    'info' => t('User Name'),
+    // Default setting.
+    'cache' => DRUPAL_NO_CACHE,
+  );
+  return $blocks;
+}
+
+/**
+ * Implements hook_block_view().
+ */
+function d7_test_block_view($delta = '') {
+  switch ($delta) {
+    case 'user_name':
+      $block['subject'] = t('User Name');
+      if (user_access('access username form')) {
+        $block['content'] = theme('user_name_display');
+      }
+    return $block;
+  }
+}
+
+/**
+ * Implements hook_theme().
+ */
+function d7_test_theme($existing, $type, $theme, $path) {
+  return array(
+    'user_name_display' => array(
+      'template' => 'themes/user_name_display',
+    ),
+  );
+}
+
+/**
+ * Retrive data from database.
+ */
+function d7_test_user_name_load() {
+  global $user;
+
+  $query = db_select('d7test_username', 'u')
+    ->fields('u', array('uid', 'first_name', 'last_name'))
+    ->condition('uid', $user->uid)
+    ->execute();
+
+  return $query->fetchAssoc();
+}
+
+/**
+ * Send username JSON to user.
+ */
+function d7_test_user_name() {
+  $response = array(
+    'data' => NULL,
+  );
+
+  $row = d7_test_user_name_load();
+
+  if ($row) {
+    $response['data'] = array(
+      'first_name' => $row['first_name'],
+      'last_name' => $row['last_name'],
+    );
+  }
+
+  drupal_json_output($response);
+}
+
+/**
+ * Render User Name form.
+ */
+function d7_test_user_name_form_page() {
+  $raw_form = drupal_get_form('d7_test_user_name_form');
+  $form = drupal_render($raw_form);
+  $content = theme_status_messages(array('display' => null));
+
+  echo $content . $form;
+}
+
+/**
+ * Page callback: User Name Data.
+ *
+ * @see d7_test_menu()
+ */
+function d7_test_user_name_form($form, &$form_state) {
+  $data = d7_test_user_name_load();
+
+  $form['first_name'] = array(
+    '#type' => 'textfield',
+    '#title' => 'First Name',
+    '#required' => TRUE,
+    '#default_value' => $data['first_name'],
+  );
+
+  $form['last_name'] = array(
+    '#type' => 'textfield',
+    '#title' => 'Last Name',
+    '#required' => TRUE,
+    '#default_value' => $data['last_name'],
+  );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save'),
+  );
+
+  return $form;
+}
+
+/**
+ * Submit Form.
+ * @param array  $form
+ * @param &$form_state
+ */
+function d7_test_user_name_form_submit($form, &$form_state) {
+  global $user;
+
+  $row = d7_test_user_name_load();
+
+  $data = array(
+    'first_name' => $form_state['values']['first_name'],
+    'last_name' => $form_state['values']['last_name']
+  );
+
+  if ($row) {
+    $query = db_update('d7test_username')
+      ->fields($data)
+      ->condition('uid', $user->uid);
+  }
+  else {
+    $data['uid'] = $user->uid;
+    $query = db_insert('d7test_username')->fields($data);
+  }
+
+  $query->execute();
+}
