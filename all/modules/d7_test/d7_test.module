@@ -2,7 +2,19 @@
 
 /**
  * @file
+ * Modulo para o teste da MMDA.
  */
+
+/**
+ * Implements d7_test_permission().
+ */
+function d7_test_permission() {
+  return array(
+    'access username form' => array(
+      'title' => t('Access User name form'),
+    ),
+  );
+}
 
 /**
  * Implements hook_menu().
@@ -14,7 +26,7 @@ function d7_test_menu() {
     'title' => 'Retrive User Name',
     'description' => 'Retrive User Name from database',
     'page callback' => 'd7_test_user_name',
-    'access arguments' => array('access content'),
+    'access arguments' => array('access username form'),
     'type' => MENU_CALLBACK,
   );
 
@@ -22,7 +34,7 @@ function d7_test_menu() {
     'title' => 'Retrive User Name',
     'description' => 'Retrive User Name from database',
     'page callback' => 'd7_test_user_name_form_page',
-    'access arguments' => array('access content'),
+    'access arguments' => array('access username form'),
     'type' => MENU_CALLBACK,
   );
 
@@ -49,7 +61,9 @@ function d7_test_block_view($delta = '') {
   switch ($delta) {
     case 'user_name':
       $block['subject'] = t('User Name');
-      $block['content'] = theme('user_name_display');
+      if (user_access('access username form')) {
+        $block['content'] = theme('user_name_display');
+      }
     return $block;
   }
 }
@@ -65,6 +79,9 @@ function d7_test_theme($existing, $type, $theme, $path) {
   );
 }
 
+/**
+ * Retrive data from database.
+ */
 function d7_test_user_name_load() {
   global $user;
 
@@ -76,6 +93,9 @@ function d7_test_user_name_load() {
   return $query->fetchAssoc();
 }
 
+/**
+ * Send username JSON to user.
+ */
 function d7_test_user_name() {
   $response = array(
     'data' => NULL,
@@ -93,6 +113,9 @@ function d7_test_user_name() {
   drupal_json_output($response);
 }
 
+/**
+ * Render User Name form.
+ */
 function d7_test_user_name_form_page() {
   $raw_form = drupal_get_form('d7_test_user_name_form');
   $form = drupal_render($raw_form);
@@ -131,14 +154,30 @@ function d7_test_user_name_form($form, &$form_state) {
   return $form;
 }
 
+/**
+ * Submit Form.
+ * @param array  $form
+ * @param &$form_state
+ */
 function d7_test_user_name_form_submit($form, &$form_state) {
   global $user;
 
+  $row = d7_test_user_name_load();
+
   $data = array(
-    'uid' => $user->uid,
     'first_name' => $form_state['values']['first_name'],
     'last_name' => $form_state['values']['last_name']
   );
 
-  drupal_write_record('d7test_username', $data, 'uid');
+  if ($row) {
+    $query = db_update('d7test_username')
+      ->fields($data)
+      ->condition('uid', $user->uid);
+  }
+  else {
+    $data['uid'] = $user->uid;
+    $query = db_insert('d7test_username')->fields($data);
+  }
+
+  $query->execute();
 }
