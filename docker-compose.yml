@@ -1,0 +1,9 @@
+version: '2'
+services:
+  drupal:
+    image: drupal:7
+    ports:
+      - 8080:80
+    volumes:
+      - ./all:/var/www/html/sites/all
+    restart: always
