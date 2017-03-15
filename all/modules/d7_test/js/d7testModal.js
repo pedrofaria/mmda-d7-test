@@ -7,6 +7,7 @@
         footer: '',
         body: '',
         onOpen: function() {},
+        onClose: function() {},
     }, options );
     var tis = this;
 
@@ -32,6 +33,7 @@
 
     function close() {
       $(settings.modal).removeClass('opened');
+      settings.onClose();
     }
 
     function setDefaultText() {
@@ -43,6 +45,12 @@
 
     registerEvents();
     setDefaultText();
+
+    return {
+      close: function() {
+        close();
+      }
+    };
   };
 
 }(jQuery));

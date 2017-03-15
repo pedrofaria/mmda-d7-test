@@ -66,21 +66,26 @@ function d7_test_theme($existing, $type, $theme, $path) {
 }
 
 function d7_test_user_name() {
+
   $response = array(
-    'data' => array(
-      'first_name' => 'Pedro',
-      'last_name' => 'Faria',
-    ),
+    'data' => NULL,
   );
 
-  $response['data'] = null;
+  if (isset($_SESSION['d7-first_name']) && isset($_SESSION['d7-last_name'])) {
+    $response['data'] = array(
+      'first_name' => $_SESSION['d7-first_name'],
+      'last_name' => $_SESSION['d7-last_name'],
+    );
+  }
 
   drupal_json_output($response);
 }
 
 function d7_test_user_name_form_page() {
-  $form = drupal_get_form('d7_test_user_name_form');
-  echo drupal_render($form);
+  $form = drupal_render(drupal_get_form('d7_test_user_name_form'));
+  $content = theme_status_messages(array('display' => null));
+
+  echo $content . $form;
 }
 
 /**
@@ -91,7 +96,8 @@ function d7_test_user_name_form_page() {
 function d7_test_user_name_form($form, &$form_state) {
   $form['first_name'] = array(
     '#type' => 'textfield',
-    '#title' => 'First Name'
+    '#title' => 'First Name',
+    '#required' => TRUE
   );
 
   $form['last_name'] = array(
@@ -99,6 +105,15 @@ function d7_test_user_name_form($form, &$form_state) {
     '#title' => 'Last Name'
   );
 
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save'),
+  );
+
   return $form;
 }
 
+function d7_test_user_name_form_submit($form, &$form_state) {
+  $_SESSION['d7-first_name'] = $form_state['values']['first_name'];
+  $_SESSION['d7-last_name'] = $form_state['values']['last_name'];
+}
